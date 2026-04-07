@@ -186,40 +186,14 @@ export default function TestimonialCollector() {
       testimonialData.attribution?.location
     ].filter(Boolean).join(', ');
     
-    const transcriptText = testimonialData.transcript
-      ?.map(m => `${m.role}: ${m.content}`)
-      .join('\n\n') || '';
-    
     const body = encodeURIComponent(
-`TESTIMONIAL
-===========
-"${testimonialData.compiled_testimonial}"
+`"${testimonialData.compiled_testimonial}"
 
 — ${attribution || 'Anonymous'}
 
-PERMISSION: ${testimonialData.permission_granted ? 'Granted for web, social, and print' : 'Not granted'}
+Permission: ${testimonialData.permission_granted ? 'Granted for web, social, and print' : 'Not granted'}
 
-RAW ANSWERS
-===========
-What brought them to work with you:
-${testimonialData.answers?.brought_to_work || 'N/A'}
-
-What shifted/changed:
-${testimonialData.answers?.what_shifted || 'N/A'}
-
-What specifically helped:
-${testimonialData.answers?.what_helped_shift || 'N/A'}
-
-What surprised them:
-${testimonialData.answers?.what_surprised || 'N/A'}
-
-Recommendation:
-${testimonialData.answers?.recommendation || 'N/A'}
-
-FULL TRANSCRIPT
-===============
-${transcriptText}
-`
+(Full transcript available in the app - client can copy if needed)`
     );
     
     // Testimonials inbox
