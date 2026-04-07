@@ -372,8 +372,8 @@ Permission: ${testimonialData.permission_granted ? 'Granted for web, social, and
               }}>
                 Click below to send your testimonial to Shannon:
               </p>
-              <a
-                href={generateEmailLink()}
+              <button
+                onClick={() => window.location.href = generateEmailLink()}
                 style={{
                   display: 'inline-block',
                   fontFamily: "'DM Sans', sans-serif",
@@ -389,7 +389,7 @@ Permission: ${testimonialData.permission_granted ? 'Granted for web, social, and
                 }}
               >
                 Submit via Email
-              </a>
+              </button>
               <p style={{
                 fontFamily: "'DM Sans', sans-serif",
                 fontSize: '0.75rem',
