@@ -55,6 +55,8 @@ export default function TestimonialCollector() {
   const [isComplete, setIsComplete] = useState(false);
   const [testimonialData, setTestimonialData] = useState(null);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -173,11 +175,10 @@ export default function TestimonialCollector() {
     navigator.clipboard.writeText(text);
   };
 
-  const generateEmailLink = () => {
-    if (!testimonialData) return '#';
+  const submitToFormspree = async () => {
+    if (!testimonialData || isSubmitting) return;
     
-    const name = testimonialData.attribution?.name || 'Anonymous';
-    const subject = encodeURIComponent(`Testimonial from ${name}`);
+    setIsSubmitting(true);
     
     const attribution = [
       testimonialData.attribution?.name,
@@ -186,18 +187,33 @@ export default function TestimonialCollector() {
       testimonialData.attribution?.location
     ].filter(Boolean).join(', ');
     
-    const body = encodeURIComponent(
-`"${testimonialData.compiled_testimonial}"
-
-— ${attribution || 'Anonymous'}
-
-Permission: ${testimonialData.permission_granted ? 'Granted for web, social, and print' : 'Not granted'}
-
-(Full transcript available in the app - client can copy if needed)`
-    );
+    const transcriptText = testimonialData.transcript
+      ?.map(m => `${m.role}: ${m.content}`)
+      .join('\n\n') || '';
     
-    // Testimonials inbox
-    return `mailto:testimonials@andersonfinch.com?subject=${subject}&body=${body}`;
+    try {
+      const response = await fetch('https://formspree.io/f/xkopegdd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testimonial: testimonialData.compiled_testimonial,
+          attribution: attribution || 'Anonymous',
+          permission: testimonialData.permission_granted ? 'Granted for web, social, and print' : 'Not granted',
+          answers: JSON.stringify(testimonialData.answers, null, 2),
+          transcript: transcriptText
+        })
+      });
+      
+      if (response.ok) {
+        setSubmitSuccess(true);
+      } else {
+        alert('There was an error submitting. Please try the copy option below.');
+      }
+    } catch (error) {
+      alert('There was an error submitting. Please try the copy option below.');
+    }
+    
+    setIsSubmitting(false);
   };
 
   return (
@@ -364,41 +380,46 @@ Permission: ${testimonialData.permission_granted ? 'Granted for web, social, and
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <p style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '0.9rem',
-                color: '#4a463f',
-                marginBottom: '1rem'
-              }}>
-                Click below to send your testimonial to Shannon:
-              </p>
-              <button
-                onClick={() => window.location.href = generateEmailLink()}
-                style={{
-                  display: 'inline-block',
+              {submitSuccess ? (
+                <p style={{
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize: '0.9rem',
-                  fontWeight: 500,
-                  padding: '0.9rem 2rem',
-                  background: '#2d2a26',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                Submit via Email
-              </button>
-              <p style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '0.75rem',
-                color: '#7a756d',
-                marginTop: '1rem',
-                marginBottom: 0
-              }}>
-                This will open your email app with everything pre-filled.
-              </p>
+                  color: '#2d6a4f',
+                  margin: 0
+                }}>
+                  ✓ Submitted successfully! Thank you.
+                </p>
+              ) : (
+                <>
+                  <p style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: '0.9rem',
+                    color: '#4a463f',
+                    marginBottom: '1rem'
+                  }}>
+                    Click below to send your testimonial to Shannon:
+                  </p>
+                  <button
+                    onClick={submitToFormspree}
+                    disabled={isSubmitting}
+                    style={{
+                      display: 'inline-block',
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: '0.9rem',
+                      fontWeight: 500,
+                      padding: '0.9rem 2rem',
+                      background: isSubmitting ? '#999' : '#2d2a26',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      cursor: isSubmitting ? 'default' : 'pointer'
+                    }}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Backup option if email doesn't work */}
